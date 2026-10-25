@@ -1,15 +1,32 @@
-//
-//  HomeView.swift
-//  MyApp
-//
-//  Created by Rifal  on 11/05/1448 AH.
-//
-
 import SwiftUI
 
 struct HomeView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack(alignment: .leading, spacing: 0) {
+            TopPanel()
+
+            Text("Your diary")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(.black)
+                .frame(height: 20)
+                .padding(.leading, 26)
+                .padding(.top, 41)
+
+            DiaryEmptyState()
+                .padding(.horizontal, 20)
+                .padding(.top, 22)
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.white)
+        .ignoresSafeArea(edges: .top)
+        .safeAreaInset(edge: .bottom) {
+            CaptureButton()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 20)
+                .background(Color.white)
+        }
     }
 }
 
