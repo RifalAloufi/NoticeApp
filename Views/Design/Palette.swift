@@ -1,7 +1,8 @@
 import SwiftUI
 
 extension Color {
-    init(hex: UInt32, opacity: Double = 1) {
+    // Team's Color(hex:) lives in PhotoDetails.swift; this one only adds opacity
+    init(hex: UInt32, opacity: Double) {
         self.init(
             .sRGB,
             red: Double((hex >> 16) & 0xFF) / 255,
