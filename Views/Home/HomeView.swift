@@ -15,6 +15,7 @@ struct HomeView: View {
             DiaryEmptyState()
                 .padding(.horizontal, 20)
                 .padding(.top, 22)
+            //
 
             Spacer(minLength: 0)
         }
