@@ -1,5 +1,5 @@
 import AVFoundation
-
+//Authorization required
 enum CameraPermission {
     static func request() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
