@@ -1,11 +1,11 @@
 import SwiftUI
 
-
 struct CaptureFlowView: View {
     let questTitle: String
-  
+   
     var onSaved: ((UIImage) -> Void)? = nil
-    var onFinish: () -> Void = {}     
+    var onFinish: () -> Void = {}
+
     private enum Step { case camera, afterCapture }
 
     @StateObject private var camera = CameraManager()
@@ -25,9 +25,12 @@ struct CaptureFlowView: View {
                     CaptureCameraView(
                         questTitle: questTitle,
                         session: camera.session,
+                        zoom: camera.zoom,
                         isShutterDisabled: isCapturing || camera.access != .authorized,
                         onClose: onFinish,
-                        onShutter: takePhoto
+                        onShutter: takePhoto,
+                        onZoomChange: { camera.setZoom($0) },
+                        onFlip: { camera.flipCamera() }
                     )
                 }
 
@@ -68,13 +71,9 @@ struct CaptureFlowView: View {
 
     private func save() {
         guard let capturedPhoto else { return }
-        if let onSaved {
-            onSaved(capturedPhoto)
-            onFinish()
-            return
-        }
         do {
             try PhotoStorage.save(capturedPhoto, quest: questTitle)
+            onSaved?(capturedPhoto)
             onFinish()
         } catch {
             saveFailed = true

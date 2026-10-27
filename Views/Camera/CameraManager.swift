@@ -3,18 +3,25 @@ import Combine
 import AVFoundation
 import UIKit
 
+// MARK: - Camera engine (AVFoundation)
 nonisolated final class CameraManager: NSObject, ObservableObject, @unchecked Sendable {
     enum Access { case unknown, authorized, denied }
 
     @Published private(set) var access: Access = .unknown
+    @Published private(set) var position: AVCaptureDevice.Position = .back   // أمامية أو خلفية
+    @Published private(set) var zoom: CGFloat = 1                            // مستوى الزوم الحالي
 
     let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
     private let queue = DispatchQueue(label: "ntu.camera.session")
     private var configured = false
+    private var device: AVCaptureDevice?
+    private var activePosition: AVCaptureDevice.Position = .back
     private var completion: ((UIImage?) -> Void)?
 
-  
+    private let maxZoomLimit: CGFloat = 10
+
+    // MARK: Permission
     func checkAccess() {
         #if targetEnvironment(simulator)
         access = .authorized
@@ -37,10 +44,11 @@ nonisolated final class CameraManager: NSObject, ObservableObject, @unchecked Se
         #endif
     }
 
+    // MARK: Session
     func start() {
         queue.async { [weak self] in
             guard let self else { return }
-            if !self.configured { self.configure() }
+            if !self.configured { self.configured = self.configure(position: self.activePosition) }
             if self.configured, !self.session.isRunning {
                 self.session.startRunning()
             }
@@ -54,24 +62,82 @@ nonisolated final class CameraManager: NSObject, ObservableObject, @unchecked Se
         }
     }
 
-    private func configure() {
+    //
+    private func configure(position: AVCaptureDevice.Position) -> Bool {
         session.beginConfiguration()
         session.sessionPreset = .photo
+        for input in session.inputs { session.removeInput(input) }
+
         guard
-            let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+            let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position),
             let input = try? AVCaptureDeviceInput(device: device),
-            session.canAddInput(input),
-            session.canAddOutput(output)
+            session.canAddInput(input)
         else {
             session.commitConfiguration()
-            return
+            return false
         }
         session.addInput(input)
-        session.addOutput(output)
+
+        if !session.outputs.contains(output) {
+            guard session.canAddOutput(output) else {
+                session.commitConfiguration()
+                return false
+            }
+            session.addOutput(output)
+        }
         session.commitConfiguration()
-        configured = true
+
+        self.device = device
+        return true
     }
 
+    // MARK: Flip front / back
+    func flipCamera() {
+        #if targetEnvironment(simulator)
+        DispatchQueue.main.async {
+            self.position = (self.position == .back) ? .front : .back
+            self.zoom = 1
+        }
+        #else
+        queue.async { [weak self] in
+            guard let self, self.configured else { return }
+            let target: AVCaptureDevice.Position = (self.activePosition == .back) ? .front : .back
+            if self.configure(position: target) {
+                self.activePosition = target
+                DispatchQueue.main.async {
+                    self.position = target
+                    self.zoom = 1
+                }
+            } else {
+                _ = self.configure(position: self.activePosition)
+            }
+        }
+        #endif
+    }
+
+    // MARK: Zoom
+    func setZoom(_ factor: CGFloat) {
+        #if targetEnvironment(simulator)
+        let clamped = max(1, min(factor, maxZoomLimit))
+        DispatchQueue.main.async { self.zoom = clamped }
+        #else
+        queue.async { [weak self] in
+            guard let self, let device = self.device else { return }
+            let upper = min(device.maxAvailableVideoZoomFactor, self.maxZoomLimit)
+            let clamped = max(device.minAvailableVideoZoomFactor, min(factor, upper))
+            do {
+                try device.lockForConfiguration()
+                device.videoZoomFactor = clamped
+                device.unlockForConfiguration()
+            } catch {
+                return
+            }
+            DispatchQueue.main.async { self.zoom = clamped }
+        }
+        #endif
+    }
+
+    // MARK: Capture
     func capturePhoto(_ completion: @escaping (UIImage?) -> Void) {
         #if targetEnvironment(simulator)
         completion(Self.placeholderImage())
@@ -87,7 +153,6 @@ nonisolated final class CameraManager: NSObject, ObservableObject, @unchecked Se
         #endif
     }
 
-    
     static func placeholderImage() -> UIImage {
         let size = CGSize(width: 900, height: 1200)
         return UIGraphicsImageRenderer(size: size).image { ctx in

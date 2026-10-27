@@ -22,4 +22,5 @@ enum Palette {
     static let secondaryLabel = Color(hex: 0x8E8E93)
     static let placeholderFill = Color(hex: 0xF2F2F7)
     static let placeholderStroke = Color(hex: 0xC7C7CC)
+    static let disabledFill = Color(hex: 0xD9D9DE)
 }

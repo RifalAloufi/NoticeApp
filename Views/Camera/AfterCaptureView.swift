@@ -18,8 +18,6 @@ struct AfterCaptureView: View {
                 }
 
                 CaptureQuestCard(label: "YOUR QUEST", title: questTitle)
-
-                // Captured photo (overlay عشان الصورة ما تكبّر الـ layout)
                 Color(white: 0.08)
                     .overlay {
                         if let photo {

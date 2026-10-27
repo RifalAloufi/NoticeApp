@@ -25,7 +25,7 @@ enum QuestProvider {
         "Find something round"
     ]
 
-    // Counting starts from this day. Never change it, or everyone's quests shift.
+    // Counting starts from this day.
     private static let startDate = DateComponents(year: 2026, month: 1, day: 1)
 
     static let allTitles: [String] = {
@@ -68,8 +68,7 @@ enum QuestProvider {
     }
 }
 
-/// A random generator that always gives the same numbers for the same seed
-/// (SplitMix64). The system generator can't be seeded, so it can't be used here.
+
 private struct SeededGenerator: RandomNumberGenerator {
     private var state: UInt64
 

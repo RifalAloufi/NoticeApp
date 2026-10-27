@@ -28,6 +28,9 @@ struct QuestCard: View {
                 Text(title)
                     .font(.system(size: 28, weight: .bold))
                     .foregroundStyle(.black)
+                    // Longer quest titles shrink a little instead of being cut off
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                     .frame(height: 34)
                     .padding(.top, 12)
 

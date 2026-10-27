@@ -36,7 +36,8 @@ private extension DiaryItem {
         self.init(
             questName: photo.quest,
             date: photo.date.formatted(.dateTime.day().month(.abbreviated)),
-            photo: Image(uiImage: image)
+            photo: Image(uiImage: image),
+            takenAt: photo.date
         )
     }
 }

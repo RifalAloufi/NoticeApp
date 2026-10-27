@@ -9,10 +9,15 @@ struct HomeView: View {
 
     var onPhotoSaved: ((UIImage, String) -> Void)? = nil
 
+    // Quests finished today. When nil, every entry counts (previews).
+    var completedToday: Int? = nil
+    // Called after the capture screen closes, so the parent can reload saved photos
+    var onCaptureFlowDismissed: () -> Void = {}
+
     @State private var cameraRoute: CameraRoute?
 
     private var completed: Int {
-        min(entries.count, quests.count)
+        min(completedToday ?? entries.count, quests.count)
     }
 
     private var questTitle: String {
@@ -50,12 +55,12 @@ struct HomeView: View {
         .background(Color.white)
         .ignoresSafeArea(edges: .top)
         .safeAreaInset(edge: .bottom) {
-            CaptureButton(action: captureTapped)
+            CaptureButton(isEnabled: completed < quests.count, action: captureTapped)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
                 .background(Color.white)
         }
-        .fullScreenCover(item: $cameraRoute) { route in
+        .fullScreenCover(item: $cameraRoute, onDismiss: onCaptureFlowDismissed) { route in
             switch route {
             case .camera:
                 // entire flow
@@ -96,4 +101,18 @@ enum CameraRoute: Identifiable {
 
 #Preview("Quest active") {
     HomeView(entries: [.sampleOrange])
+}
+
+#Preview("Today and yesterday") {
+    HomeView(
+        entries: [.sampleForest, .sampleDesert, .sampleNight, .sampleOrange, .sampleSunset],
+        completedToday: 2
+    )
+}
+
+#Preview("All done") {
+    HomeView(
+        entries: [.sampleForest, .sampleDesert, .sampleNight, .sampleOrange, .sampleSunset, .sampleOcean],
+        completedToday: 3
+    )
 }

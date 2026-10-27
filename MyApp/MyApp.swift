@@ -7,7 +7,7 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                HomeView()
+                HomeContainer()
 
                 if showSplash {
                     SplashView {
