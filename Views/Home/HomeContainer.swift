@@ -10,7 +10,7 @@ struct HomeContainer: View {
     var body: some View {
         HomeView(
             quests: QuestProvider.quests(for: today),
-            entries: photos.compactMap(DiaryItem.init),
+            entries: photos.compactMap { DiaryItem($0) },
             completedToday: photosTakenToday,
             onCaptureFlowDismissed: reload
         )

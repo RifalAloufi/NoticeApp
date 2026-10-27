@@ -44,6 +44,8 @@ struct PhotoPlaceholder: View {
 struct PhotoDetails: View {
     @State private var position: Int? = Calendar.current.component(.day, from: Date())
     @State private var showShare = false
+    @State private var showDeleteAlert = false
+    @State private var deleteRequested = false
 
     private var daysInMonth: Int {
         Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
@@ -107,12 +109,12 @@ struct PhotoDetails: View {
 
             // شريط الحلقة
             GeometryReader { geo in
-                let item: CGFloat = 104           // حجم المربع
-                let gap: CGFloat = 16             // المسافة بين المربعات
-                let pitch = item + gap            // مركز لمركز
-                let center = geo.size.width / 2   // منتصف الشاشة
-                let reach: CGFloat = 296          // المسافة الكلية للحلقة
-                let ratio: CGFloat = 0.65         // توزيع المسافات
+                let item: CGFloat = 104
+                let gap: CGFloat = 16
+                let pitch = item + gap
+                let center = geo.size.width / 2
+                let reach: CGFloat = 296
+                let ratio: CGFloat = 0.65
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: gap) {
@@ -153,9 +155,21 @@ struct PhotoDetails: View {
             .frame(height: 136)
             .padding(.bottom, 8)
         }
-        .sheet(isPresented: $showShare) {
-            Shareview()
+        .sheet(isPresented: $showShare, onDismiss: {
+            // بعد ما ينقفل الشيت، اعرض التنبيه
+            if deleteRequested {
+                deleteRequested = false
+                showDeleteAlert = true
+            }
+        }) {
+            ShareView(onDelete: { deleteRequested = true })
                 .presentationDetents([.height(296)])
+        }
+        .alert("Delete picture?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) { }
+        } message: {
+            Text("This will permanently delete your photo from your history")
         }
     }
 }
