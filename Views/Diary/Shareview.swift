@@ -7,9 +7,10 @@
 
 import SwiftUI
 
-struct Shareview: View {
+
+struct ShareView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var showDeleteAlert = false
+    var onDelete: () -> Void = { }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -17,15 +18,12 @@ struct Shareview: View {
             ZStack {
                 Text("Share to...")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
 
                 HStack {
                     Spacer()
-
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
                             .frame(width: 40, height: 40)
                             .background(Color(hex: 0x3A3A3C), in: Circle())
                     }
@@ -35,76 +33,65 @@ struct Shareview: View {
             .padding(.horizontal, 24)
             .padding(.top, 24)
 
-            // صف الأيقونات
+            // صف التطبيقات
             HStack(spacing: 0) {
-                // زر Share يفتح شيت آبل
-                ShareLink(
-                    item: "Find something red",
-                    preview: SharePreview("Quest from 12 Oct")
-                ) {
-                    ShareOptionLabel(
-                        title: "Share",
-                        symbol: "square.and.arrow.up",
-                        fill: Color(hex: 0x3A3A3C),
-                        ring: Color(hex: 0x4A4A4C)
-                    )
+                ShareLink(item: "Find something red", preview: SharePreview("Quest from 12 Oct")) {
+                    ShareOptionLabel(title: "Share", symbol: "square.and.arrow.up",
+                                     fill: Color(hex: 0x3A3A3C), ring: Color(hex: 0x4A4A4C))
                 }
-                .buttonStyle(.plain)
 
-                ShareOptionButton(
-                    title: "Messages",
-                    symbol: "message.fill",
-                    fill: Color(hex: 0x5CC96A),
-                    ring: Color(hex: 0x2F6B3C)
-                ) { }
+                Button { } label: {
+                    ShareOptionLabel(title: "Messages", symbol: "message.fill",
+                                     fill: Color(hex: 0x5CC96A), ring: Color(hex: 0x2F6B3C))
+                }
 
-                ShareOptionButton(
-                    title: "Instagram",
-                    symbol: "camera",
-                    fill: Color(hex: 0xD6416C),
-                    ring: Color(hex: 0x5A2E40)
-                ) { }
+                Button { } label: {
+                    ShareOptionLabel(title: "Instagram", assetName: "instagram-logo",
+                                     ring: Color(hex: 0x5A2E40))
+                }
 
-                ShareOptionButton(
-                    title: "Snapchat",
-                    symbol: "face.smiling",
-                    fill: Color(hex: 0xFFFC52),
-                    ring: Color(hex: 0x8A8832),
-                    symbolColor: .black
-                ) { }
+                Button { } label: {
+                    ShareOptionLabel(title: "Snapchat", assetName: "snapchat-logo",
+                                     ring: Color(hex: 0x8A8832))
+                }
             }
+            .buttonStyle(.plain)
             .padding(.horizontal, 16)
             .padding(.top, 24)
 
-            // زرين Save و Delete
+            // Save و Delete
             HStack(spacing: 16) {
-                ShareActionButton(title: "Save", symbol: "square.and.arrow.down") { }
-                ShareActionButton(title: "Delete", symbol: "trash") { showDeleteAlert = true }
+                ShareActionButton(title: "Save", symbol: "square.and.arrow.down") {
+                    // مؤقت: نحفظ أيقونة لين تجي الصورة الحقيقية
+                    if let image = UIImage(systemName: "photo") {
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    }
+                }
+
+                ShareActionButton(title: "Delete", symbol: "trash") {
+                    onDelete()
+                    dismiss()
+                }
             }
             .padding(.horizontal, 24)
             .padding(.top, 32)
 
             Spacer()
         }
+        .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(hex: 0x232325))
         .preferredColorScheme(.dark)
-        .alert("Delete picture?", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) { dismiss() }
-        } message: {
-            Text("This will permanently delete your photo from your history")
-        }
     }
 }
 
-// الشكل فقط: دائرة بحلقة + اسم تحتها
+// دائرة بحلقة + اسم تحتها (أيقونة SF أو شعار من Assets)
 struct ShareOptionLabel: View {
     let title: String
-    let symbol: String
-    let fill: Color
+    var symbol: String? = nil
+    var assetName: String? = nil
+    var fill: Color = .clear
     let ring: Color
-    var symbolColor: Color = .white
 
     var body: some View {
         VStack(spacing: 8) {
@@ -113,47 +100,29 @@ struct ShareOptionLabel: View {
                     .strokeBorder(ring, lineWidth: 2)
                     .frame(width: 64, height: 64)
 
-                Circle()
-                    .fill(fill)
-                    .frame(width: 56, height: 56)
-
-                Image(systemName: symbol)
-                    .font(.system(size: 22, weight: .medium))
-                    .foregroundStyle(symbolColor)
+                if let assetName {
+                    Image(assetName)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 56, height: 56)
+                        .clipShape(Circle())
+                } else {
+                    Circle().fill(fill).frame(width: 56, height: 56)
+                    if let symbol {
+                        Image(systemName: symbol)
+                            .font(.system(size: 22, weight: .medium))
+                    }
+                }
             }
 
             Text(title)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity)
     }
 }
 
-// نفس الشكل لكن كزر عادي
-struct ShareOptionButton: View {
-    let title: String
-    let symbol: String
-    let fill: Color
-    let ring: Color
-    var symbolColor: Color = .white
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            ShareOptionLabel(
-                title: title,
-                symbol: symbol,
-                fill: fill,
-                ring: ring,
-                symbolColor: symbolColor
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// زر عريض على شكل كبسولة: أيقونة + اسم
+// زر عريض على شكل كبسولة
 struct ShareActionButton: View {
     let title: String
     let symbol: String
@@ -161,23 +130,17 @@ struct ShareActionButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: symbol)
-                    .font(.system(size: 17, weight: .medium))
-
-                Text(title)
-                    .font(.system(size: 17, weight: .semibold))
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(Color(hex: 0x3A3A3C), in: Capsule())
+            Label(title, systemImage: symbol)
+                .font(.system(size: 17, weight: .semibold))
+                .frame(maxWidth: .infinity)
+                .frame(height: 56)
+                .background(Color(hex: 0x3A3A3C), in: Capsule())
         }
         .buttonStyle(.plain)
     }
 }
 
 #Preview {
-    Shareview()
+    ShareView()
         .frame(height: 296)
 }
