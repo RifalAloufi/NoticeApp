@@ -17,7 +17,7 @@ struct CaptureAccessOffView: View {
                         .frame(width: 64, height: 64)
                         .overlay(
                             Image(systemName: "camera")
-                                .font(.system(size: 24))
+                                .font(.system(size: 32))
                                 .foregroundStyle(Color(white: 0.45))
                         )
 
@@ -34,11 +34,11 @@ struct CaptureAccessOffView: View {
                 }
 
                 Text("Camera access is off")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(NTU.ink)
 
                 Text("Turn it on in your iPhone Settings to take your daily photo. Your photos stay on this device.")
-                    .font(.system(size: 11))
+                    .font(.system(size: 16))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(NTU.muted)
                     .padding(.horizontal, 28)

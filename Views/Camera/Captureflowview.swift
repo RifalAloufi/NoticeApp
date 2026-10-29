@@ -1,11 +1,8 @@
 import SwiftUI
-
 struct CaptureFlowView: View {
     let questTitle: String
-   
     var onSaved: ((UIImage) -> Void)? = nil
     var onFinish: () -> Void = {}
-
     private enum Step { case camera, afterCapture }
 
     @StateObject private var camera = CameraManager()
@@ -59,7 +56,7 @@ struct CaptureFlowView: View {
         camera.capturePhoto { image in
             isCapturing = false
             guard let image else { return }
-            capturedPhoto = image
+            capturedPhoto = PhotoStorage.resized(image)   // resizing the photo
             withAnimation { step = .afterCapture }
         }
     }

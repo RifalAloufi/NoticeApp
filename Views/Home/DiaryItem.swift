@@ -21,4 +21,22 @@ extension DiaryItem {
     static let sampleForest = DiaryItem(questName: "Find something growing", date: "26 Oct", photo: Image("sampleForest"), takenAt: daysAgo(1))
     static let sampleDesert = DiaryItem(questName: "Find a line that leads on", date: "26 Oct", photo: Image("sampleDesert"), takenAt: daysAgo(1))
     static let sampleNight = DiaryItem(questName: "Find calm in a busy place", date: "26 Oct", photo: Image("sampleNight"), takenAt: daysAgo(1))
+    static func loadSaved() -> [DiaryItem] {
+        PhotoStorage.loadAll().reversed().compactMap { saved in
+            guard let ui = PhotoStorage.thumbnail(for: saved) else { return nil }
+            return DiaryItem(
+                questName: saved.quest,
+                date: saved.dayText,
+                photo: Image(uiImage: ui),
+                takenAt: saved.date
+            )
+        }
+    }
+ 
+//the count of the copleted quests
+    static func completedTodayCount() -> Int {
+        PhotoStorage.loadAll()
+            .filter { Calendar.current.isDateInToday($0.date) }
+            .count
+    }
 }

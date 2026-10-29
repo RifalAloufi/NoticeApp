@@ -1,23 +1,21 @@
 import UIKit
+import ImageIO
 
-// تخزين (أوفلاين) داخل الجهاز:
-//   Documents/DiaryPhotos/<uuid>.jpg   ← الصورة
-//   Documents/DiaryPhotos/index.json   ← بيانات كل صورة (اسم التحدي + التاريخ والوقت)
+
 struct SavedPhoto: Codable, Identifiable {
     let id: UUID
     let fileName: String
-    let quest: String      // اسم التحدي مثل "Find something red"
-    let date: Date         // التاريخ والوقت وقت الحفظ
-
-    // "12 Oct"
+    let quest: String
+    let date: Date
+//date
     var dayText: String {
         Self.dayFormatter.string(from: date)
     }
-    // "6:30 PM"
+    //time
     var timeText: String {
         Self.timeFormatter.string(from: date)
     }
-    // "October 2026" (لتجميع الدايري بالأشهر)
+//to collect the photos by its months
     var monthText: String {
         Self.monthFormatter.string(from: date)
     }
@@ -44,7 +42,7 @@ enum PhotoStorage {
 
     private static var indexURL: URL { folder.appendingPathComponent("index.json") }
 
-    // كل الصور المحفوظة، الأحدث أول
+//all the saved photos
     static func loadAll() -> [SavedPhoto] {
         guard let data = try? Data(contentsOf: indexURL) else { return [] }
         let decoder = JSONDecoder()
@@ -53,6 +51,7 @@ enum PhotoStorage {
         return all.sorted { $0.date > $1.date }
     }
 
+//
     static func groupedByMonth() -> [(month: String, photos: [SavedPhoto])] {
         var order: [String] = []
         var groups: [String: [SavedPhoto]] = [:]
@@ -65,7 +64,7 @@ enum PhotoStorage {
 
     @discardableResult
     static func save(_ image: UIImage, quest: String, date: Date = Date()) throws -> SavedPhoto {
-        guard let data = normalized(image).jpegData(compressionQuality: 0.85) else {
+        guard let data = resized(image).jpegData(compressionQuality: 0.85) else {
             throw CocoaError(.fileWriteUnknown)
         }
         let id = UUID()
@@ -100,11 +99,38 @@ enum PhotoStorage {
         try? encoder.encode(remaining).write(to: indexURL, options: .atomic)
     }
 
-    // يثبّت اتجاه الصورة عشان ما تطلع مقلوبة بعد الحفظ
-    private static func normalized(_ image: UIImage) -> UIImage {
-        guard image.imageOrientation != .up else { return image }
-        return UIGraphicsImageRenderer(size: image.size).image { _ in
-            image.draw(in: CGRect(origin: .zero, size: image.size))
+    private static let thumbCache = NSCache<NSString, UIImage>()
+//resizing to prevent the cash crash
+    static func resized(_ image: UIImage, maxDimension: CGFloat = 2048) -> UIImage {
+        let size = image.size
+        let longest = max(size.width, size.height)
+        let ratio = longest > maxDimension ? maxDimension / longest : 1
+        let target = CGSize(width: size.width * ratio, height: size.height * ratio)
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        format.opaque = true
+        return UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
         }
+    }
+
+//resizing the images to display in the homescreen
+    static func thumbnail(for photo: SavedPhoto, maxDimension: CGFloat = 900) -> UIImage? {
+        let key = photo.fileName as NSString
+        if let cached = thumbCache.object(forKey: key) { return cached }
+
+        let url = folder.appendingPathComponent(photo.fileName)
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceShouldCacheImmediately: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension
+        ]
+        guard let cg = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
+        let image = UIImage(cgImage: cg)
+        thumbCache.setObject(image, forKey: key)
+        return image
     }
 }

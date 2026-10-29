@@ -8,8 +8,8 @@ nonisolated final class CameraManager: NSObject, ObservableObject, @unchecked Se
     enum Access { case unknown, authorized, denied }
 
     @Published private(set) var access: Access = .unknown
-    @Published private(set) var position: AVCaptureDevice.Position = .back   // أمامية أو خلفية
-    @Published private(set) var zoom: CGFloat = 1                            // مستوى الزوم الحالي
+    @Published private(set) var position: AVCaptureDevice.Position = .back   //camera switch
+    @Published private(set) var zoom: CGFloat = 1                            // zoom in/out
 
     let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
