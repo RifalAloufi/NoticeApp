@@ -37,36 +37,42 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             TopPanel(questTitle: questTitle, completed: completed)
 
-            if shownEntries.isEmpty {
-                Text("Your diary")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.black)
-                    .frame(height: 20)
-                    .padding(.leading, 26)
-                    .padding(.top, 41)
+            // Scrolls only when the screen is too short (small iPhones, landscape)
+            ScrollView {
+                if shownEntries.isEmpty {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Your diary")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.black)
+                            .frame(height: 20)
+                            .padding(.leading, 6)
+                            .padding(.top, 41)
 
-                DiaryEmptyState()
+                        DiaryEmptyState()
+                            .padding(.top, 22)
+                    }
                     .padding(.horizontal, 20)
-                    .padding(.top, 22)
-            } else {
-                DiaryPreview(
-                    items: Array(shownEntries.reversed()),
-                    onSeeAll: onSeeAll,
-                    onOpen: onOpenEntry
-                )
-                .padding(.horizontal, 20)
-                .padding(.top, 41)
+                    .readableWidth()
+                } else {
+                    DiaryPreview(
+                        items: Array(shownEntries.reversed()),
+                        onSeeAll: onSeeAll,
+                        onOpen: onOpenEntry
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.top, 41)
+                    .readableWidth()
+                }
             }
-
-            Spacer(minLength: 0)
+            .scrollBounceBehavior(.basedOnSize)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.white)
-        .ignoresSafeArea(edges: .top)
         .safeAreaInset(edge: .bottom) {
             CaptureButton(isEnabled: completed < quests.count, action: captureTapped)
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
+                .readableWidth(Layout.focusedWidth)
                 .background(Color.white)
         }
         .onAppear(perform: loadSaved)

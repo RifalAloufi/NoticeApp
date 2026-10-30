@@ -112,7 +112,7 @@ struct PhotoDetails: View {
                         .accessibilityLabel("No photo yet")
                 }
             }
-            .frame(minHeight: 320, maxHeight: 448)
+            .frame(minHeight: 200, maxHeight: 448)
             .padding(.horizontal, 24)
             .padding(.top, 24)
 
@@ -190,6 +190,7 @@ struct PhotoDetails: View {
             .frame(height: 136)
             .padding(.bottom, 8)
         }
+        .readableWidth()
         .background(Color.white.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)

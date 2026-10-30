@@ -9,7 +9,8 @@ struct ProgressSegments: View {
             ForEach(0..<3, id: \.self) { index in
                 RoundedRectangle(cornerRadius: radii[index], style: .continuous)
                     .fill(index < completed ? Palette.brandPrimary : Palette.progressTrack)
-                    .frame(width: 103.7, height: 4)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 4)
             }
         }
     }

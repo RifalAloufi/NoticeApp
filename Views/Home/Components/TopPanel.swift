@@ -11,7 +11,7 @@ struct TopPanel: View {
         VStack(alignment: .leading, spacing: 0) {
             GreetingHeader(date: "Mon 10 Oct", greeting: "Good evening")
                 .padding(.leading, 34)
-                .padding(.top, 92)
+                .padding(.top, 33)
 
             QuestCard(
                 eyebrow: "TODAY'S QUESTS",
@@ -22,11 +22,13 @@ struct TopPanel: View {
             )
             .padding(.top, 18)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: 338, alignment: .top)
+        .padding(.bottom, 1)
+        .readableWidth()
+        // The mint panel always runs edge to edge, up behind the status bar
         .background(
             UnevenRoundedRectangle(bottomLeadingRadius: 44, bottomTrailingRadius: 44, style: .continuous)
                 .fill(Palette.mint)
+                .ignoresSafeArea(edges: .top)
         )
     }
 }

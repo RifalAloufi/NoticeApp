@@ -14,10 +14,8 @@ struct MonthView: View {
     private static let monthNames = ["January", "February", "March", "April", "May", "June",
                                      "July", "August", "September", "October", "November", "December"]
 
-    let columns = [
-        GridItem(.flexible(), spacing: 20),
-        GridItem(.flexible(), spacing: 20)
-    ]
+    // 2 columns on iPhone, more on wider screens
+    let columns = [GridItem(.adaptive(minimum: 150), spacing: 20)]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -42,6 +40,7 @@ struct MonthView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
+                    .readableWidth(900)
                 }
             }
         }

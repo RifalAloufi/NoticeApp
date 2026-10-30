@@ -51,7 +51,7 @@ struct ReminderSheet: View {
         .padding(.horizontal, 20)
         .padding(.top, 40)
         .padding(.bottom, 20)
-        .frame(maxWidth: .infinity)
+        .readableWidth(Layout.focusedWidth)
         .background(
             UnevenRoundedRectangle(topLeadingRadius: 44, topTrailingRadius: 44)
                 .fill(Color.white)

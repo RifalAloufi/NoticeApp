@@ -49,7 +49,9 @@ struct QuestCard: View {
             .padding(.top, 30)
 
             CounterChip(text: counter)
-                .offset(x: 319, y: 33)
+                .padding(.trailing, 20)
+                .padding(.top, 33)
+                .frame(maxWidth: .infinity, alignment: .topTrailing)
         }
         .frame(height: 162)
     }

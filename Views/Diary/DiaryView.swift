@@ -35,11 +35,8 @@ struct DiaryView: View {
     let months = ["January", "February", "March", "April", "May", "June",
                   "July", "August", "September", "October", "November", "December"]
 
-    let columns = [
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible(), spacing: 16),
-        GridItem(.flexible())
-    ]
+    // 3 columns on iPhone, more on wider screens
+    let columns = [GridItem(.adaptive(minimum: 90), spacing: 16)]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -57,6 +54,7 @@ struct DiaryView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
+                .readableWidth(900)
             }
         }
         .background(Color.white.ignoresSafeArea())

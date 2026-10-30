@@ -89,6 +89,7 @@ struct ShareView: View {
             Spacer()
         }
         .foregroundStyle(.white)
+        .readableWidth(Layout.focusedWidth)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(hex: 0x232325))
         .preferredColorScheme(.dark)

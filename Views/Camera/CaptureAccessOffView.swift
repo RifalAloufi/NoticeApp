@@ -79,6 +79,8 @@ struct CaptureAccessOffView: View {
             .padding(.bottom, 12)
         }
         .padding(.horizontal, 16)
+        .readableWidth(Layout.focusedWidth)
+        .frame(maxWidth: .infinity)
         .background(NTU.background.ignoresSafeArea())
     }
 }

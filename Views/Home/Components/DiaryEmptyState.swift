@@ -25,12 +25,14 @@ struct DiaryEmptyState: View {
                 .lineSpacing(-0.8)
                 .foregroundStyle(Palette.secondaryLabel)
                 .multilineTextAlignment(.center)
-                .frame(width: 300, height: 32)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 24)
                 .padding(.top, 17)
         }
         .padding(.top, 30)
+        .padding(.bottom, 30)
         .frame(maxWidth: .infinity)
-        .frame(height: 270, alignment: .top)
+        .frame(minHeight: 270, alignment: .top)
         .background(Palette.placeholderFill, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay(DashedOutline(cornerRadius: 20, dash: [6, 4]))
     }

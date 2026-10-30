@@ -120,6 +120,7 @@ struct CaptureCameraView: View {
                 .padding(.bottom, 6)
             }
             .padding(.horizontal, 16)
+            .readableWidth(Layout.focusedWidth)
         }
     }
 }

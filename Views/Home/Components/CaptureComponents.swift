@@ -10,6 +10,7 @@ enum NTU {
     static let glass = Color.white.opacity(0.12)                       // الكروت الشفافة فوق الأسود
     static let glassStroke = Color.white.opacity(0.22)
     static let corner: CGFloat = 12
+    static let buttonCorner: CGFloat = 25                              // same as the Capture button
 }
 
 // MARK: - Quest card (dark glass, used on camera / after-capture)
@@ -65,7 +66,7 @@ struct NTUPrimaryButtonStyle: ButtonStyle {
             .frame(maxWidth: .infinity)
             .frame(height: 46)
             .background(NTU.green.opacity(configuration.isPressed ? 0.8 : 1))
-            .clipShape(RoundedRectangle(cornerRadius: NTU.corner))
+            .clipShape(RoundedRectangle(cornerRadius: NTU.buttonCorner, style: .continuous))
     }
 }
 
@@ -79,10 +80,10 @@ struct NTUSecondaryButtonStyle: ButtonStyle {
             .frame(height: 46)
             .background(Color.white.opacity(configuration.isPressed ? 0.85 : 1))
             .overlay(
-                RoundedRectangle(cornerRadius: NTU.corner)
+                RoundedRectangle(cornerRadius: NTU.buttonCorner, style: .continuous)
                     .stroke(NTU.ink.opacity(0.7), lineWidth: 1)
             )
-            .clipShape(RoundedRectangle(cornerRadius: NTU.corner))
+            .clipShape(RoundedRectangle(cornerRadius: NTU.buttonCorner, style: .continuous))
     }
 }
 
