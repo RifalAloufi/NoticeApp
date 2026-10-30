@@ -1,9 +1,11 @@
 import SwiftUI
 
-// Camera access is off (light)
+// Camera access is off
 struct CaptureAccessOffView: View {
     var onClose: () -> Void = {}
     var onBackToHome: () -> Void = {}
+
+    private let darkGreen = Color(red: 38/255, green: 77/255, blue: 58/255)
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,16 +48,33 @@ struct CaptureAccessOffView: View {
 
             Spacer()
 
-            VStack(spacing: 10) {
-                Button("Open Settings") {
+            VStack(spacing: 12) {
+                Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
                         UIApplication.shared.open(url)
                     }
+                } label: {
+                    Text("Open Settings")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(darkGreen)
+                        .clipShape(Capsule())
                 }
-                .buttonStyle(NTUPrimaryButtonStyle())
 
-                Button("Back to Home", action: onBackToHome)
-                    .buttonStyle(NTUSecondaryButtonStyle())
+                Button(action: onBackToHome) {
+                    Text("Back to Home")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 52)
+                        .background(Color.white)
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule().stroke(darkGreen, lineWidth: 1.5)
+                        )
+                }
             }
             .padding(.bottom, 12)
         }

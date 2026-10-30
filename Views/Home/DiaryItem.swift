@@ -36,7 +36,7 @@ extension DiaryItem {
         }
     }
  
-//the count of the copleted quests
+//the count of the completed quests
     static func completedTodayCount() -> Int {
         PhotoStorage.loadAll()
             .filter { Calendar.current.isDateInToday($0.date) }

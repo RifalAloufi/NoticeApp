@@ -30,7 +30,7 @@ struct CaptureCameraView: View {
                     Spacer()
                 }
 
-                CaptureQuestCard(label: "YOUR QUEST", title: questTitle)
+                QuestHeaderCard(title: questTitle)
 
                 // Viewfinder
                 ZStack {
@@ -82,6 +82,8 @@ struct CaptureCameraView: View {
                             isPinching = false
                         }
                 )
+
+                // Controls
                 HStack {
                     Color.clear.frame(width: 44, height: 44)
 
@@ -113,11 +115,38 @@ struct CaptureCameraView: View {
                     }
                     .accessibilityLabel("Flip camera")
                 }
+                .frame(height: 70)
                 .padding(.horizontal, 4)
                 .padding(.bottom, 6)
             }
             .padding(.horizontal, 16)
         }
+    }
+}
+
+struct QuestHeaderCard: View {
+    let title: String
+
+    private let mint = Color(red: 142/255, green: 195/255, blue: 176/255)   // 8EC3B0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("YOUR QUEST")
+                .font(.system(size: 13, weight: .semibold))
+                .tracking(1.2)
+                .foregroundStyle(mint)
+
+            Text(title)
+                .font(.system(size: 24, weight: .bold))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 18))
     }
 }
 

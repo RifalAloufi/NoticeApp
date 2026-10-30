@@ -3,21 +3,30 @@ import AVFoundation
 
 struct HomeView: View {
     var quests: [String] = ["Find something orange", "Find something red", "Find something round"]
-    var entries: [DiaryItem] = []
+
+    var entries: [DiaryItem]? = nil
     var onSeeAll: () -> Void = {}
     var onOpenEntry: (DiaryItem) -> Void = { _ in }
 
     var onPhotoSaved: ((UIImage, String) -> Void)? = nil
 
-    // Quests finished today. When nil, every entry counts (previews).
+    // Quests finished today. When nil, it's counted from the saved photos (or entries in previews).
     var completedToday: Int? = nil
     // Called after the capture screen closes, so the parent can reload saved photos
     var onCaptureFlowDismissed: () -> Void = {}
 
     @State private var cameraRoute: CameraRoute?
 
+    // الصور المحفوظة بالجهاز (الأقدم أول)
+    @State private var savedEntries: [DiaryItem] = []
+    @State private var savedTodayCount = 0
+
+    private var shownEntries: [DiaryItem] {
+        entries ?? savedEntries
+    }
+
     private var completed: Int {
-        min(completedToday ?? entries.count, quests.count)
+        min(completedToday ?? (entries?.count ?? savedTodayCount), quests.count)
     }
 
     private var questTitle: String {
@@ -28,7 +37,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             TopPanel(questTitle: questTitle, completed: completed)
 
-            if entries.isEmpty {
+            if shownEntries.isEmpty {
                 Text("Your diary")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.black)
@@ -41,7 +50,7 @@ struct HomeView: View {
                     .padding(.top, 22)
             } else {
                 DiaryPreview(
-                    items: Array(entries.reversed()),
+                    items: Array(shownEntries.reversed()),
                     onSeeAll: onSeeAll,
                     onOpen: onOpenEntry
                 )
@@ -60,7 +69,11 @@ struct HomeView: View {
                 .padding(.bottom, 20)
                 .background(Color.white)
         }
-        .fullScreenCover(item: $cameraRoute, onDismiss: onCaptureFlowDismissed) { route in
+        .onAppear(perform: loadSaved)
+        .fullScreenCover(item: $cameraRoute, onDismiss: {
+            loadSaved()
+            onCaptureFlowDismissed()
+        }) { route in
             switch route {
             case .camera:
                 // entire flow
@@ -86,6 +99,12 @@ struct HomeView: View {
             cameraRoute = granted ? .camera : .accessOff
         }
     }
+
+    // يقرأ الصور المحفوظة (DiaryItem+Storage.swift)
+    private func loadSaved() {
+        savedEntries = DiaryItem.loadSaved()
+        savedTodayCount = DiaryItem.completedTodayCount()
+    }
 }
 
 enum CameraRoute: Identifiable {
@@ -96,7 +115,7 @@ enum CameraRoute: Identifiable {
 }
 
 #Preview("First use") {
-    HomeView()
+    HomeView(entries: [])
 }
 
 #Preview("Quest active") {
