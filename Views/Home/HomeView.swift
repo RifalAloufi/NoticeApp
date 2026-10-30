@@ -37,7 +37,7 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 0) {
             TopPanel(questTitle: questTitle, completed: completed)
 
-            // Scrolls only when the screen is too short (small iPhones, landscape)
+            // We're done!
             ScrollView {
                 if shownEntries.isEmpty {
                     VStack(alignment: .leading, spacing: 0) {
