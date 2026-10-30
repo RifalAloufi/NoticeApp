@@ -4,6 +4,9 @@ struct TopPanel: View {
     var questTitle: String = "Find something orange"
     var completed: Int = 0
 
+    private let questsPerDay = 3
+    private var allDone: Bool { completed >= questsPerDay }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             GreetingHeader(date: "Mon 10 Oct", greeting: "Good evening")
@@ -12,8 +15,8 @@ struct TopPanel: View {
 
             QuestCard(
                 eyebrow: "TODAY'S QUESTS",
-                title: questTitle,
-                progressLabel: "\(completed) of 3 quests done",
+                title: allDone ? "Lovely, all quests done!" : questTitle,
+                progressLabel: allDone ? "Come back tomorrow for new quests" : "\(completed) of 3 quests done",
                 counter: "\(completed) / 3",
                 completed: completed
             )

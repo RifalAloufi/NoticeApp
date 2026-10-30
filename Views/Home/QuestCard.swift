@@ -30,7 +30,7 @@ struct QuestCard: View {
                     .foregroundStyle(.black)
                     // Longer quest titles shrink a little instead of being cut off
                     .lineLimit(1)
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.5)
                     .frame(height: 34)
                     .padding(.top, 12)
 
@@ -45,6 +45,7 @@ struct QuestCard: View {
                     .padding(.top, 13)
             }
             .padding(.leading, 23)
+            .padding(.trailing, 23)
             .padding(.top, 30)
 
             CounterChip(text: counter)
