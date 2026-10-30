@@ -1,12 +1,5 @@
 import SwiftUI
 
-// كل صورة في الصفحة (الصورة + العنوان + التاريخ)
-struct Entry: Identifiable {
-    let id = UUID()
-    let title: String
-    let date: String
-}
-
 struct MonthView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -15,14 +8,11 @@ struct MonthView: View {
     let month: String
     let year: Int
 
-    // بيانات تجريبية مؤقتة، نبدلها بصور المستخدم وتحدياته بعدين
-    let entries = [
-        Entry(title: "Find something red", date: "12 Oct"),
-        Entry(title: "Find something orange", date: "12 Oct"),
-        Entry(title: "Find something blue", date: "12 Oct"),
-        Entry(title: "Find something curved", date: "11 Oct"),
-        Entry(title: "Find something golden", date: "11 Oct")
-    ]
+    // صور هذا الشهر من الجهاز (الأحدث أول)
+    @State private var photos: [SavedPhoto] = []
+
+    private static let monthNames = ["January", "February", "March", "April", "May", "June",
+                                     "July", "August", "September", "October", "November", "December"]
 
     let columns = [
         GridItem(.flexible(), spacing: 20),
@@ -34,18 +24,40 @@ struct MonthView: View {
             headerView
 
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 20) {
-                    ForEach(entries) { entry in
-                        EntryCard(entry: entry)
+                if photos.isEmpty {
+                    Text("No photos in \(month) yet")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 60)
+                } else {
+                    LazyVGrid(columns: columns, spacing: 20) {
+                        ForEach(photos) { photo in
+                            // لما تضغطين على الصورة تفتح تفاصيلها
+                            NavigationLink(value: DiaryRoute.photo(photo.id)) {
+                                EntryCard(photo: photo)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.top, 24)
                 }
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
             }
         }
         .background(Color.white.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear(perform: load)
+    }
+
+    // يقرأ صور هذا الشهر والسنة
+    private func load() {
+        guard let index = Self.monthNames.firstIndex(of: month) else { photos = []; return }
+        photos = PhotoStorage.loadAll().filter {
+            diaryCalendar.component(.year, from: $0.date) == year &&
+            diaryCalendar.component(.month, from: $0.date) == index + 1
+        }
     }
 
     var headerView: some View {
@@ -65,7 +77,7 @@ struct MonthView: View {
                 .foregroundColor(deepGreen)
                 .padding(.top, 8)
 
-            Text("\(String(entries.count)) entries")
+            Text(photos.count == 1 ? "1 entry" : "\(photos.count) entries")
                 .font(.subheadline)
                 .foregroundColor(deepGreen)
         }
@@ -91,22 +103,32 @@ struct MonthView: View {
 
 // بطاقة وحدة: الصورة + العنوان + التاريخ
 struct EntryCard: View {
-    let entry: Entry
+    let photo: SavedPhoto
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // مربع رمادي فاتح مكان الصورة، بعدين تنحط الصورة الحقيقية
-            RoundedRectangle(cornerRadius: 28)
-                .fill(Color(white: 0.88))
+            // الصورة الحقيقية (أو مربع رمادي لو ما انقرأت)
+            Color(white: 0.88)
                 .frame(height: 140)
+                .overlay(
+                    Group {
+                        if let image = PhotoStorage.thumbnail(for: photo) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        }
+                    }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 28))
 
-            Text(entry.title)
+            Text(photo.quest)
                 .font(.footnote)
                 .fontWeight(.bold)
                 .foregroundColor(.black)
+                .lineLimit(1)
                 .padding(.top, 6)
 
-            Text(entry.date)
+            Text(photo.dayText)
                 .font(.caption)
                 .foregroundColor(.gray)
         }
@@ -114,6 +136,7 @@ struct EntryCard: View {
 }
 
 #Preview {
-    MonthView(month: "October", year: 2026)
+    NavigationStack {
+        MonthView(month: "October", year: 2026)
+    }
 }
-

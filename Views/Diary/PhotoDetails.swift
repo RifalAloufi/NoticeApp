@@ -42,20 +42,36 @@ struct PhotoPlaceholder: View {
 }
 
 struct PhotoDetails: View {
-    @State private var position: Int? = Calendar.current.component(.day, from: Date())
+    @Environment(\.dismiss) private var dismiss
+
+    // الصورة اللي انفتحت من الدايري
+    let photoID: UUID
+
+    // صور نفس الشهر (الأقدم أول) تظهر في الشريط تحت
+    @State private var monthPhotos: [SavedPhoto] = []
+    // الصورة المعروضة حالياً (تتغير لما تسحبين الشريط)
+    @State private var position: UUID?
     @State private var showShare = false
     @State private var showDeleteAlert = false
     @State private var deleteRequested = false
 
-    private var daysInMonth: Int {
-        Calendar.current.range(of: .day, in: .month, for: Date())?.count ?? 30
+    private var current: SavedPhoto? {
+        monthPhotos.first { $0.id == (position ?? photoID) }
+    }
+
+    // الصورة الكبيرة: تنقرأ مرة وحدة كل ما تتغير الصورة (مو كل ما تنعاد رسم الصفحة)
+    @State private var currentImage: UIImage?
+
+    private var dateText: String {
+        guard let photo = current else { return "" }
+        return photo.date.formatted(Date.FormatStyle(date: .abbreviated, time: .omitted, calendar: diaryCalendar))
     }
 
     var body: some View {
         VStack(spacing: 0) {
             // صف الأزرار
             HStack {
-                Button { } label: {
+                Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.black)
@@ -76,15 +92,29 @@ struct PhotoDetails: View {
                         .shadow(color: .black.opacity(0.1), radius: 8, y: 2)
                 }
                 .accessibilityLabel("Share")
+                .disabled(current == nil)
             }
             .padding(.horizontal, 24)
 
             // الصورة الكبيرة
-            PhotoPlaceholder(cornerRadius: 32, iconSize: 48)
-                .frame(minHeight: 320, maxHeight: 448)
-                .padding(.horizontal, 24)
-                .padding(.top, 24)
-                .accessibilityLabel("No photo yet")
+            Group {
+                if let image = currentImage {
+                    Color.clear
+                        .overlay(
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 32))
+                        .accessibilityLabel(current?.quest ?? "Photo")
+                } else {
+                    PhotoPlaceholder(cornerRadius: 32, iconSize: 48)
+                        .accessibilityLabel("No photo yet")
+                }
+            }
+            .frame(minHeight: 320, maxHeight: 448)
+            .padding(.horizontal, 24)
+            .padding(.top, 24)
 
             // النصوص
             Text("QUEST")
@@ -94,12 +124,14 @@ struct PhotoDetails: View {
                 .foregroundStyle(Color(hex: 0x397964))
                 .padding(.top, 24)
 
-            Text("Find something red")
+            Text(current?.quest ?? "")
                 .font(.system(size: 24, weight: .bold))
                 .foregroundStyle(.black)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
                 .padding(.top, 8)
 
-            Text("12 Oct 2026")
+            Text(dateText)
                 .font(.system(size: 14))
                 .foregroundStyle(Color(hex: 0x8E8E93))
                 .padding(.top, 8)
@@ -107,7 +139,7 @@ struct PhotoDetails: View {
             // مسافة مرنة تدفع الشريط لتحت
             Spacer(minLength: 16)
 
-            // شريط الحلقة
+            // شريط الحلقة: صور هذا الشهر
             GeometryReader { geo in
                 let item: CGFloat = 104
                 let gap: CGFloat = 16
@@ -118,8 +150,8 @@ struct PhotoDetails: View {
 
                 ScrollView(.horizontal, showsIndicators: false) {
                     LazyHStack(spacing: gap) {
-                        ForEach(1...daysInMonth, id: \.self) { day in
-                            PhotoPlaceholder(cornerRadius: 16, iconSize: 24)
+                        ForEach(monthPhotos) { photo in
+                            StripThumbnail(photo: photo)
                                 .frame(width: item, height: item)
                                 .visualEffect { content, proxy in
                                     let midX = proxy.frame(in: .named("strip")).midX
@@ -141,7 +173,10 @@ struct PhotoDetails: View {
                                         .offset(x: shift)
                                         .opacity(cos(angle))
                                 }
-                                .id(day)
+                                .onTapGesture {
+                                    withAnimation { position = photo.id }
+                                }
+                                .id(photo.id)
                         }
                     }
                     .padding(.vertical, 16)
@@ -155,6 +190,11 @@ struct PhotoDetails: View {
             .frame(height: 136)
             .padding(.bottom, 8)
         }
+        .background(Color.white.ignoresSafeArea())
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear(perform: load)
+        .onChange(of: position) { _, _ in refreshImage() }
         .sheet(isPresented: $showShare, onDismiss: {
             // بعد ما ينقفل الشيت، اعرض التنبيه
             if deleteRequested {
@@ -162,18 +202,77 @@ struct PhotoDetails: View {
                 showDeleteAlert = true
             }
         }) {
-            ShareView(onDelete: { deleteRequested = true })
-                .presentationDetents([.height(296)])
+            ShareView(
+                image: currentImage,
+                quest: current?.quest ?? "",
+                onDelete: { deleteRequested = true }
+            )
+            .presentationDetents([.height(296)])
         }
         .alert("Delete picture?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) { }
+            Button("Delete", role: .destructive) { deleteCurrent() }
         } message: {
             Text("This will permanently delete your photo from your history")
+        }
+    }
+
+    // يقرأ صور نفس شهر الصورة المفتوحة
+    private func load() {
+        let all = PhotoStorage.loadAll()
+        guard let start = all.first(where: { $0.id == photoID }) else { return }
+        monthPhotos = all
+            .filter { diaryCalendar.isDate($0.date, equalTo: start.date, toGranularity: .month) }
+            .sorted { $0.date < $1.date }
+        refreshImage()
+
+        // نحرك الشريط للصورة المفتوحة بعد ما ينرسم أول مرة (قبلها ما يعرف مكانها)
+        if position == nil {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(80))
+                position = start.id
+            }
+        }
+    }
+
+    private func refreshImage() {
+        currentImage = current.flatMap { PhotoStorage.image(for: $0) }
+    }
+
+    // يحذف الصورة الحالية من الجهاز، ويعرض اللي بجنبها (أو يرجع لو ما بقي شي)
+    private func deleteCurrent() {
+        guard let photo = current else { return }
+        let index = monthPhotos.firstIndex { $0.id == photo.id } ?? 0
+        PhotoStorage.delete(photo)
+        monthPhotos.removeAll { $0.id == photo.id }
+
+        if monthPhotos.isEmpty {
+            dismiss()
+        } else {
+            position = monthPhotos[min(index, monthPhotos.count - 1)].id
+        }
+    }
+}
+
+// صورة صغيرة في الشريط
+struct StripThumbnail: View {
+    let photo: SavedPhoto
+
+    var body: some View {
+        if let image = PhotoStorage.thumbnail(for: photo) {
+            Color.clear
+                .overlay(
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+        } else {
+            PhotoPlaceholder(cornerRadius: 16, iconSize: 24)
         }
     }
 }
 
 #Preview {
-    PhotoDetails()
+    PhotoDetails(photoID: UUID())
 }

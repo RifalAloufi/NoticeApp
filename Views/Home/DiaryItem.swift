@@ -7,6 +7,8 @@ struct DiaryItem: Identifiable {
     let photo: Image
     // When the photo was taken. The diary uses it to show today's and yesterday's photos.
     var takenAt: Date = Date()
+    // The saved photo this tile shows (nil for sample items)
+    var savedID: UUID? = nil
 }
 
 extension DiaryItem {
@@ -28,7 +30,8 @@ extension DiaryItem {
                 questName: saved.quest,
                 date: saved.dayText,
                 photo: Image(uiImage: ui),
-                takenAt: saved.date
+                takenAt: saved.date,
+                savedID: saved.id
             )
         }
     }

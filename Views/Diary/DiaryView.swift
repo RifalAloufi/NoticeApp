@@ -2,21 +2,33 @@ import SwiftUI
 
 let deepGreen = Color(red: 16/255, green: 58/255, blue: 44/255)
 
+// The diary shows Gregorian months and years (January ... December), whatever the phone's calendar is
+let diaryCalendar = Calendar(identifier: .gregorian)
+
 struct DiaryView: View {
 
     // أمر الرجوع للصفحة اللي قبل
     @Environment(\.dismiss) private var dismiss
 
     // السنة المختارة، تبدأ بالسنة الحالية
-    @State private var selectedYear = Calendar.current.component(.year, from: Date())
+    @State private var selectedYear = diaryCalendar.component(.year, from: Date())
 
-    // السنة اللي بدأ فيها المستخدم يستخدم التطبيق
-    // مؤقتاً = السنة الحالية، وصفحة الـ logic بعدين تحددها
-    let startYear = Calendar.current.component(.year, from: Date())
+    // كل الصور المحفوظة (نعرض منها صور كل شهر على بطاقته)
+    @State private var allPhotos: [SavedPhoto] = PhotoStorage.loadAll()
+
+    // السنة اللي بدأ فيها المستخدم يستخدم التطبيق = سنة أقدم صورة محفوظة
+    // (لو ما فيه صور: السنة الحالية)
+    let startYear: Int = {
+        let current = diaryCalendar.component(.year, from: Date())
+        let oldest = PhotoStorage.loadAll()
+            .map { diaryCalendar.component(.year, from: $0.date) }
+            .min()
+        return min(oldest ?? current, current)
+    }()
 
     // السنوات اللي تظهر في القايمة (من سنة البداية لين الحين)
     var years: [Int] {
-        let current = Calendar.current.component(.year, from: Date())
+        let current = diaryCalendar.component(.year, from: Date())
         return Array(startYear...current).reversed()
     }
 
@@ -37,10 +49,8 @@ struct DiaryView: View {
                 LazyVGrid(columns: columns, spacing: 20) {
                     ForEach(months, id: \.self) { month in
                         // لما تضغطين على الشهر يفتح صفحته
-                        NavigationLink {
-                            MonthView(month: month, year: selectedYear)
-                        } label: {
-                            MonthCard(name: month)
+                        NavigationLink(value: DiaryRoute.month(name: month, year: selectedYear)) {
+                            MonthCard(name: month, photos: photos(in: month))
                         }
                         .buttonStyle(.plain)
                     }
@@ -50,9 +60,19 @@ struct DiaryView: View {
             }
         }
         .background(Color.white.ignoresSafeArea())
+        .onAppear { allPhotos = PhotoStorage.loadAll() }
         // نخفي شريط الرجوع الجاهز لأن عندنا زرنا الخاص
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    // صور شهر معيّن في السنة المختارة (الأحدث أول)
+    func photos(in month: String) -> [SavedPhoto] {
+        guard let index = months.firstIndex(of: month) else { return [] }
+        return allPhotos.filter {
+            diaryCalendar.component(.year, from: $0.date) == selectedYear &&
+            diaryCalendar.component(.month, from: $0.date) == index + 1
+        }
     }
 
     var headerView: some View {
@@ -124,28 +144,40 @@ struct DiaryView: View {
 // بطاقة الشهر: 3 صور فوق بعض + اسم الشهر
 struct MonthCard: View {
     let name: String
+    // صور هذا الشهر (الأحدث أول). لو ما فيه صور تظهر المربعات الرمادية
+    var photos: [SavedPhoto] = []
+
+    // مربع صورة (أو رمادي لو ما فيه صورة بهذا المكان)
+    private func square(_ index: Int, gray: Double) -> some View {
+        Color(white: gray)
+            .frame(width: 80, height: 80)
+            .overlay(
+                Group {
+                    if index < photos.count, let image = PhotoStorage.thumbnail(for: photos[index]) {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                    }
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+    }
 
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
                 // الصورة الخلفية (فوق)
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color(white: 0.94))
-                    .frame(width: 80, height: 80)
+                square(2, gray: 0.94)
                     .rotationEffect(.degrees(-3))
                     .offset(x: 0, y: -8)
 
                 // الصورة الوسطى (يمين)
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color(white: 0.88))
-                    .frame(width: 80, height: 80)
+                square(1, gray: 0.88)
                     .rotationEffect(.degrees(5))
                     .offset(x: 12, y: -4)
 
-                // الصورة الأمامية (يسار)
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color(white: 0.82))
-                    .frame(width: 80, height: 80)
+                // الصورة الأمامية (يسار): الأحدث
+                square(0, gray: 0.82)
                     .rotationEffect(.degrees(-4))
                     .offset(x: -8, y: 0)
             }

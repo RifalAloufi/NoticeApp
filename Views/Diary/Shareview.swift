@@ -10,6 +10,9 @@ import SwiftUI
 
 struct ShareView: View {
     @Environment(\.dismiss) private var dismiss
+    // الصورة الحقيقية واسم التحدي
+    var image: UIImage? = nil
+    var quest: String = ""
     var onDelete: () -> Void = { }
 
     var body: some View {
@@ -35,9 +38,16 @@ struct ShareView: View {
 
             // صف التطبيقات
             HStack(spacing: 0) {
-                ShareLink(item: "Find something red", preview: SharePreview("Quest from 12 Oct")) {
-                    ShareOptionLabel(title: "Share", symbol: "square.and.arrow.up",
-                                     fill: Color(hex: 0x3A3A3C), ring: Color(hex: 0x4A4A4C))
+                if let image {
+                    ShareLink(item: Image(uiImage: image), preview: SharePreview(quest, image: Image(uiImage: image))) {
+                        ShareOptionLabel(title: "Share", symbol: "square.and.arrow.up",
+                                         fill: Color(hex: 0x3A3A3C), ring: Color(hex: 0x4A4A4C))
+                    }
+                } else {
+                    ShareLink(item: quest) {
+                        ShareOptionLabel(title: "Share", symbol: "square.and.arrow.up",
+                                         fill: Color(hex: 0x3A3A3C), ring: Color(hex: 0x4A4A4C))
+                    }
                 }
 
                 Button { } label: {
@@ -62,8 +72,8 @@ struct ShareView: View {
             // Save و Delete
             HStack(spacing: 16) {
                 ShareActionButton(title: "Save", symbol: "square.and.arrow.down") {
-                    // مؤقت: نحفظ أيقونة لين تجي الصورة الحقيقية
-                    if let image = UIImage(systemName: "photo") {
+                    // يحفظ الصورة الحقيقية في مكتبة الصور
+                    if let image {
                         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
                     }
                 }

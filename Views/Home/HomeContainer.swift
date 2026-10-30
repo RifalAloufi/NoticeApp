@@ -1,23 +1,54 @@
 import SwiftUI
 
-/// Connects HomeView to today's quests and the photos saved on the device.
+// The screens you can open from Home
+enum DiaryRoute: Hashable {
+    case diary                          // "See all": years and months
+    case month(name: String, year: Int) // one month's photos
+    case photo(UUID)                    // one saved photo
+}
+
+/// Connects Home to today's quests, the photos saved on the device, and the diary screens.
 /// Everything is read from local storage, so it works offline.
+///
+///   Home ── See all ──▶ DiaryView ──▶ MonthView ──▶ PhotoDetails ──▶ ShareView
+///    └──── diary photo ──────────────────────────────▶ PhotoDetails
+///    └──── Capture ──▶ camera ──▶ saved photo ──▶ back to Home
 struct HomeContainer: View {
     @State private var photos: [SavedPhoto] = PhotoStorage.loadAll()
     @State private var today = Date()
+    @State private var path: [DiaryRoute] = []
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        HomeView(
-            quests: QuestProvider.quests(for: today),
-            entries: photos.compactMap { DiaryItem($0) },
-            completedToday: photosTakenToday,
-            onCaptureFlowDismissed: reload
-        )
+        NavigationStack(path: $path) {
+            HomeView(
+                quests: QuestProvider.quests(for: today),
+                entries: photos.compactMap { DiaryItem($0) },
+                onSeeAll: { path.append(.diary) },
+                onOpenEntry: { item in
+                    if let id = item.savedID { path.append(.photo(id)) }
+                },
+                completedToday: photosTakenToday,
+                onCaptureFlowDismissed: reload
+            )
+            .toolbar(.hidden, for: .navigationBar)
+            .navigationDestination(for: DiaryRoute.self) { route in
+                switch route {
+                case .diary:
+                    DiaryView()
+                case .month(let name, let year):
+                    MonthView(month: name, year: year)
+                case .photo(let id):
+                    PhotoDetails(photoID: id)
+                }
+            }
+        }
         // Pick up a new day (new quests, progress back to 0) when the app comes back
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { reload() }
         }
+        // Coming back from the diary or a photo (a photo may have been deleted)
+        .onChange(of: path) { _, _ in reload() }
     }
 
     private var photosTakenToday: Int {
@@ -32,12 +63,13 @@ struct HomeContainer: View {
 
 private extension DiaryItem {
     init?(_ photo: SavedPhoto) {
-        guard let image = PhotoStorage.image(for: photo) else { return nil }
+        guard let image = PhotoStorage.thumbnail(for: photo) else { return nil }
         self.init(
             questName: photo.quest,
             date: photo.date.formatted(.dateTime.day().month(.abbreviated)),
             photo: Image(uiImage: image),
-            takenAt: photo.date
+            takenAt: photo.date,
+            savedID: photo.id
         )
     }
 }
