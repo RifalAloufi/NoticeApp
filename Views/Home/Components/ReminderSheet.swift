@@ -24,15 +24,15 @@ struct ReminderSheet: View {
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 16)
 
             // Main button
             Button(action: onTurnOn) {
                 Text("Turn on reminders")
-                    .font(.system(size: 20))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 68)
+                    .frame(height: 50)
                     .background(green)
                     .clipShape(Capsule())
             }
@@ -41,16 +41,16 @@ struct ReminderSheet: View {
             // Secondary button
             Button(action: onLater) {
                 Text("Maybe later")
-                    .font(.system(size: 20))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.black)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 68)
-                    .overlay(Capsule().stroke(green, lineWidth: 3))
+                    .frame(height: 50)
+                    .overlay(Capsule().stroke(green, lineWidth: 1.5))
             }
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 20)
         .padding(.top, 40)
-        .padding(.bottom, 24)
+        .padding(.bottom, 20)
         .frame(maxWidth: .infinity)
         .background(
             UnevenRoundedRectangle(topLeadingRadius: 44, topTrailingRadius: 44)

@@ -14,6 +14,9 @@ enum DiaryRoute: Hashable {
 ///    └──── diary photo ──────────────────────────────▶ PhotoDetails
 ///    └──── Capture ──▶ camera ──▶ saved photo ──▶ back to Home
 struct HomeContainer: View {
+    // Called once, right after the last of today's quests is finished (used to offer daily reminders)
+    var onAllQuestsDone: () -> Void = {}
+
     @State private var photos: [SavedPhoto] = PhotoStorage.loadAll()
     @State private var today = Date()
     @State private var path: [DiaryRoute] = []
@@ -56,8 +59,11 @@ struct HomeContainer: View {
     }
 
     private func reload() {
+        let doneBefore = photosTakenToday
         today = Date()
         photos = PhotoStorage.loadAll()
+        let perDay = QuestProvider.questsPerDay
+        if doneBefore < perDay && photosTakenToday >= perDay { onAllQuestsDone() }
     }
 }
 

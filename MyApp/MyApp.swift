@@ -8,7 +8,7 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             ZStack {
-                HomeContainer()
+                HomeContainer(onAllQuestsDone: { offerReminders(after: ReminderTiming.delayAfterAllQuests) })
 
                 // Dim background behind the sheet
                 if showReminder {
@@ -23,7 +23,7 @@ struct MyApp: App {
                         Spacer()
                         ReminderSheet(
                             onTurnOn: turnOnReminders,
-                            onLater: hideSheet
+                            onLater: remindMeLater
                         )
                     }
                     .transition(.move(edge: .bottom))
@@ -33,17 +33,27 @@ struct MyApp: App {
                 if showSplash {
                     SplashView {
                         showSplash = false
-                        Task {
-                            try? await Task.sleep(for: .seconds(0.4))
-                            withAnimation(.spring(response: 0.55, dampingFraction: 0.9)) {
-                                showReminder = true
-                            }
-                        }
                     }
                     .transition(.opacity)
                 }
             }
         }
+    }
+
+    // Shows the reminder sheet after a short wait, only if it's a good moment (see ReminderTiming)
+    func offerReminders(after delay: Double) {
+        Task {
+            guard !showReminder, await ReminderTiming.shouldShow() else { return }
+            try? await Task.sleep(for: .seconds(delay))
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.9)) {
+                showReminder = true
+            }
+        }
+    }
+
+    func remindMeLater() {
+        ReminderTiming.snooze()
+        hideSheet()
     }
 
     func hideSheet() {
