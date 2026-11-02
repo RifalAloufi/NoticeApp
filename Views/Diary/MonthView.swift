@@ -15,7 +15,7 @@ struct MonthView: View {
                                      "July", "August", "September", "October", "November", "December"]
 
     // 2 columns on iPhone, more on wider screens
-    let columns = [GridItem(.adaptive(minimum: 150), spacing: 20)]
+    let columns = [GridItem(.adaptive(minimum: 152), spacing: 20)]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -72,7 +72,7 @@ struct MonthView: View {
             }
 
             Text("\(month) \(String(year))")
-                .font(.system(size: 34, weight: .bold))
+                .font(.system(size: 32, weight: .bold))
                 .foregroundColor(deepGreen)
                 .padding(.top, 8)
 
@@ -125,7 +125,7 @@ struct EntryCard: View {
                 .fontWeight(.bold)
                 .foregroundColor(.black)
                 .lineLimit(1)
-                .padding(.top, 6)
+                .padding(.top, 8)
 
             Text(photo.dayText)
                 .font(.caption)
